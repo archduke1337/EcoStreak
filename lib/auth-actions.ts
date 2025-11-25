@@ -189,3 +189,25 @@ export async function updateUserStats(userId: string, updates: any) {
         };
     }
 }
+
+export async function updateUserProfile(userId: string, name: string, college: string) {
+    try {
+        const { databases } = await createAdminClient();
+
+        // Update the user document
+        await databases.updateDocument(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            userId,
+            { name, college }
+        );
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update profile error:", error);
+        return { 
+            success: false, 
+            error: error.message || "Failed to update profile" 
+        };
+    }
+}
