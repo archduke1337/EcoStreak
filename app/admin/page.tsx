@@ -25,7 +25,6 @@ export default function AdminPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [dataLoading, setDataLoading] = useState(true);
-    const [authChecked, setAuthChecked] = useState(false);
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalPoints: 0,
@@ -37,27 +36,26 @@ export default function AdminPage() {
     const [levelData, setLevelData] = useState<LevelData[]>([]);
 
     useEffect(() => {
-        console.log('[Admin] useEffect - loading:', loading, 'user:', user?.email, 'authChecked:', authChecked);
-        
-        // Wait for auth to finish loading before checking
+        // Wait for auth to finish loading
         if (loading) return;
         
-        // Give a small delay to ensure user state is properly set
-        const timer = setTimeout(() => {
-            console.log('[Admin] Timer fired - user:', user?.email, 'isAdmin:', user ? isAdmin(user) : 'no user');
-            if (!user) {
-                console.log('[Admin] No user, redirecting to login');
-                router.push('/login');
-            } else if (!isAdmin(user)) {
-                console.log('[Admin] Not admin, redirecting to dashboard');
-                toast.error('Admin access required');
-                router.push('/dashboard');
-            } else {
-                console.log('[Admin] Admin verified, fetching data');
-                setAuthChecked(true);
-                fetchAdminData();
-            }
-        }, 100);
+        // Check authorization
+        if (!user) {
+            console.log('[Admin] No user, redirecting to login');
+            router.push('/login');
+            return;
+        }
+        
+        if (!isAdmin(user)) {
+            console.log('[Admin] Not admin, redirecting to dashboard');
+            toast.error('Admin access required');
+            router.push('/dashboard');
+            return;
+        }
+        
+        console.log('[Admin] Admin verified, fetching data');
+        fetchAdminData();
+    }, [user, loading, router]);
         
         return () => clearTimeout(timer);
     }, [user, loading, router]);
@@ -95,7 +93,7 @@ export default function AdminPage() {
     };
 
     // Show loading while checking auth
-    if (loading || !authChecked) {
+    if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <Spinner size="lg" color="success" label="Loading..." />
@@ -103,6 +101,7 @@ export default function AdminPage() {
         );
     }
 
+    // If we reach here, user is verified as admin by the useEffect
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
     return (

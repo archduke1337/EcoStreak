@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         fetchCurrentUser();
-    }, [fetchCurrentUser]);
+    }, []);
 
     const login = async (email: string, password: string): Promise<void> => {
         console.log('Attempting login for:', email);

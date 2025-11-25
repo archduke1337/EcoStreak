@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Card, CardBody, CardHeader, Input } from '@nextui-org/react';
@@ -11,24 +11,29 @@ import { getErrorMessage } from '@/types/errors';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login } = useAuth();
+    const { login, user, loading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (!loading && user) {
+            router.push('/dashboard');
+        }
+    }, [user, loading, router]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        setIsLoading(true);
 
         try {
             await login(email, password);
             toast.success('Welcome back! 🌱');
-            // Use router.refresh() to sync the cookie, then navigate
-            router.refresh();
             router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -69,10 +74,10 @@ export default function LoginPage() {
                                 type="submit"
                                 color="success"
                                 size="lg"
-                                isLoading={loading}
+                                isLoading={isLoading}
                                 className="font-semibold"
                             >
-                                {loading ? 'Logging in...' : 'Login'}
+                                {isLoading ? 'Logging in...' : 'Login'}
                             </Button>
                             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                 Don&apos;t have an account?{' '}

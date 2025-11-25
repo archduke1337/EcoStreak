@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Card, CardBody, CardHeader, Input } from '@nextui-org/react';
@@ -11,7 +11,7 @@ import { getErrorMessage } from '@/types/errors';
 
 export default function SignupPage() {
     const router = useRouter();
-    const { signup } = useAuth();
+    const { signup, user, loading } = useAuth();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -19,7 +19,14 @@ export default function SignupPage() {
         password: '',
         confirmPassword: '',
     });
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (!loading && user) {
+            router.push('/dashboard');
+        }
+    }, [user, loading, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,17 +45,15 @@ export default function SignupPage() {
             return;
         }
 
-        setLoading(true);
+        setIsLoading(true);
 
         try {
             await signup(formData.email, formData.password, formData.name, formData.college);
             toast.success('Welcome to EcoStreak! 🎉');
-            // Use router.refresh() to sync the cookie, then navigate
-            router.refresh();
             router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -121,10 +126,10 @@ export default function SignupPage() {
                                 type="submit"
                                 color="success"
                                 size="lg"
-                                isLoading={loading}
+                                isLoading={isLoading}
                                 className="font-semibold"
                             >
-                                {loading ? 'Creating account...' : 'Sign Up'}
+                                {isLoading ? 'Creating account...' : 'Sign Up'}
                             </Button>
                             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                                 Already have an account?{' '}
