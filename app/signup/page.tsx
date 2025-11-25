@@ -43,10 +43,11 @@ export default function SignupPage() {
         try {
             await signup(formData.email, formData.password, formData.name, formData.college);
             toast.success('Welcome to EcoStreak! 🎉');
-            window.location.href = '/dashboard';
+            // Use router.refresh() to sync the cookie, then navigate
+            router.refresh();
+            router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));
-        } finally {
             setLoading(false);
         }
     };

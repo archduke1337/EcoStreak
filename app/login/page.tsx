@@ -23,11 +23,11 @@ export default function LoginPage() {
         try {
             await login(email, password);
             toast.success('Welcome back! 🌱');
-            // Use window.location for more reliable redirect after auth
-            window.location.href = '/dashboard';
+            // Use router.refresh() to sync the cookie, then navigate
+            router.refresh();
+            router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));
-        } finally {
             setLoading(false);
         }
     };
