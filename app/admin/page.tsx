@@ -68,9 +68,15 @@ export default function AdminPage() {
                 return;
             }
             
-            setStats(result.stats);
-            setCollegeData(result.collegeData);
-            setLevelData(result.levelData);
+            setStats(result.stats || {
+                totalUsers: 0,
+                totalPoints: 0,
+                certificatesIssued: 0,
+                activeToday: 0,
+                totalTeams: 0,
+            });
+            setCollegeData(result.collegeData || []);
+            setLevelData(result.levelData || []);
         } catch (error: any) {
             console.error('Admin data error:', error);
             toast.error(error.message || 'Failed to load admin data');

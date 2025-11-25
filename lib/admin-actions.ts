@@ -82,6 +82,15 @@ export async function fetchAdminStats(userEmail: string) {
         return {
             success: false,
             error: error.message || 'Failed to fetch admin stats',
+            stats: {
+                totalUsers: 0,
+                totalPoints: 0,
+                certificatesIssued: 0,
+                activeToday: 0,
+                totalTeams: 0,
+            },
+            collegeData: [],
+            levelData: [],
         };
     }
 }
@@ -137,6 +146,7 @@ export async function fetchCollegeStats(userEmail: string) {
         return {
             success: false,
             error: error.message || 'Failed to fetch college stats',
+            collegeStats: [],
         };
     }
 }
