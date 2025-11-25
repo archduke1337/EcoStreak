@@ -69,6 +69,8 @@ export default function AdminPage() {
     }, [user, loading, router]);
 
     const fetchAdminData = async () => {
+        if (!user) return;
+        
         try {
             setDataLoading(true);
             const result = await fetchAdminStats(user.email);
