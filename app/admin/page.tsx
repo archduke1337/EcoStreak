@@ -56,9 +56,6 @@ export default function AdminPage() {
         console.log('[Admin] Admin verified, fetching data');
         fetchAdminData();
     }, [user, loading, router]);
-        
-        return () => clearTimeout(timer);
-    }, [user, loading, router]);
 
     const fetchAdminData = async () => {
         try {
