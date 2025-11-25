@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { Client, Databases, Query, ID } from 'node-appwrite';
-import { SESSION_COOKIE } from '@/lib/auth-constants';
+import { Query, ID } from 'node-appwrite';
+import { createSessionClient, createAdminClient } from '@/lib/appwrite-server';
 
-const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
 const TEAMS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID!;
@@ -15,19 +12,16 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const teamId = searchParams.get('teamId');
 
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get(SESSION_COOKIE);
-
-        if (!sessionCookie?.value) {
+        // Verify user is authenticated via session
+        try {
+            const { account } = await createSessionClient();
+            await account.get();
+        } catch (e) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
         }
 
-        const client = new Client()
-            .setEndpoint(APPWRITE_ENDPOINT)
-            .setProject(APPWRITE_PROJECT_ID)
-            .setSession(sessionCookie.value);
-
-        const databases = new Databases(client);
+        // Use admin client for database operations
+        const { databases } = await createAdminClient();
 
         if (!teamId) {
             return NextResponse.json({ error: 'Team ID required' }, { status: 400 });
@@ -74,19 +68,16 @@ export async function GET(request: Request) {
 // POST - Create or join team
 export async function POST(request: Request) {
     try {
-        const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get(SESSION_COOKIE);
-
-        if (!sessionCookie?.value) {
+        // Verify user is authenticated via session
+        try {
+            const { account } = await createSessionClient();
+            await account.get();
+        } catch (e) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
         }
 
-        const client = new Client()
-            .setEndpoint(APPWRITE_ENDPOINT)
-            .setProject(APPWRITE_PROJECT_ID)
-            .setSession(sessionCookie.value);
-
-        const databases = new Databases(client);
+        // Use admin client for database operations
+        const { databases } = await createAdminClient();
         const body = await request.json();
         const { action, teamName, teamCode, userId, userPoints } = body;
 

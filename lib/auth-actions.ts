@@ -29,6 +29,7 @@ export async function signUpWithEmail(formData: {
             newUser.$id,
             {
                 name,
+                email,
                 college,
                 points: 0,
                 level: 1,

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
             [Query.limit(1000), Query.orderDesc('points')]
         );
 
-        // Add email to each user from their account (email is not stored in collection)
+        // Map user documents (email is now stored in collection)
         const users = response.documents.map((doc: any) => {
             // Parse badges if stored as string
             let badges = doc.badges || [];
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
             return {
                 $id: doc.$id,
                 name: doc.name,
-                email: doc.email || `user_${doc.$id}@ecostreak.app`, // Placeholder since email not in collection
+                email: doc.email || 'N/A',
                 college: doc.college || 'Unknown',
                 points: doc.points || 0,
                 level: doc.level || 1,
