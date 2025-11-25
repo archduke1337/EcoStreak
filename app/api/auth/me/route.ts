@@ -12,18 +12,27 @@ export async function GET(request: NextRequest) {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get(SESSION_COOKIE);
         console.log('[Auth/me] Session cookie exists:', !!sessionCookie?.value);
-        console.log('[Auth/me] Cookie value length:', sessionCookie?.value?.length);
+        if (sessionCookie?.value) {
+            console.log('[Auth/me] Cookie length:', sessionCookie.value.length);
+            console.log('[Auth/me] Cookie first 20 chars:', sessionCookie.value.substring(0, 20));
+        }
         
         // Verify user is authenticated via session
         let accountData;
         try {
+            console.log('[Auth/me] Creating session client...');
             const { account } = await createSessionClient();
+            console.log('[Auth/me] Session client created, getting account...');
             accountData = await account.get();
             console.log('[Auth/me] Account found:', accountData.$id);
         } catch (e: any) {
             // No valid session
-            console.log('[Auth/me] Session error:', e.message);
-            console.log('[Auth/me] Full error:', e);
+            console.log('[Auth/me] Session error type:', e.type || e.name);
+            console.log('[Auth/me] Session error message:', e.message);
+            if (e.response) {
+                console.log('[Auth/me] Response status:', e.response.status);
+                console.log('[Auth/me] Response body:', e.response);
+            }
             return NextResponse.json({ user: null }, { status: 401 });
         }
         
