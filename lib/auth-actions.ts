@@ -59,7 +59,21 @@ export async function signUpWithEmail(formData: {
             expires: new Date(session.expire),
         });
 
-        return { success: true, userId: newUser.$id };
+        // Return user data directly
+        const userData = {
+            $id: newUser.$id,
+            email,
+            name,
+            college,
+            points: 0,
+            level: 1,
+            badges: [],
+            streak: 0,
+            lastActiveDate: new Date().toISOString().split("T")[0],
+            role: "student",
+        };
+
+        return { success: true, userId: newUser.$id, user: userData };
     } catch (error: any) {
         console.error("Signup error:", error);
         return { 
@@ -98,7 +112,39 @@ export async function signInWithEmail(formData: {
         });
         console.log('[Login] Cookie set successfully');
 
-        return { success: true, userId: session.userId };
+        // Fetch user data from database using admin client
+        const { databases } = await createAdminClient();
+        let userData = null;
+        try {
+            const userDoc = await databases.getDocument(
+                DATABASE_ID,
+                USERS_COLLECTION_ID,
+                session.userId
+            );
+            
+            // Parse badges
+            let badges = userDoc.badges || [];
+            if (typeof badges === 'string') {
+                try { badges = JSON.parse(badges); } catch { badges = []; }
+            }
+            
+            userData = {
+                $id: userDoc.$id,
+                email: email,
+                name: userDoc.name,
+                college: userDoc.college || 'Unknown College',
+                points: userDoc.points || 0,
+                level: userDoc.level || 1,
+                badges,
+                streak: userDoc.streak || 0,
+                lastActiveDate: userDoc.lastActiveDate || new Date().toISOString().split('T')[0],
+                role: userDoc.role || 'student',
+            };
+        } catch (e) {
+            console.log('[Login] User doc not found, using basic data');
+        }
+
+        return { success: true, userId: session.userId, user: userData };
     } catch (error: any) {
         console.error("Login error:", error);
         

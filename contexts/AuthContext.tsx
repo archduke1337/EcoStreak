@@ -52,9 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error(result.error);
         }
         
-        console.log('Login successful, fetching user data...');
-        // Fetch user data after successful login
-        await fetchCurrentUser();
+        console.log('Login successful, user data:', result.user);
+        // Set user directly from server action response
+        if (result.user) {
+            setUser(result.user);
+        } else {
+            // Fallback to fetching user data
+            await fetchCurrentUser();
+        }
     };
 
     const signup = async (email: string, password: string, name: string, college: string): Promise<void> => {
@@ -66,9 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error(result.error);
         }
         
-        console.log('Signup successful, fetching user data...');
-        // Fetch user data after successful signup
-        await fetchCurrentUser();
+        console.log('Signup successful, user data:', result.user);
+        // Set user directly from server action response
+        if (result.user) {
+            setUser(result.user);
+        } else {
+            // Fallback to fetching user data
+            await fetchCurrentUser();
+        }
     };
 
     const logout = async (): Promise<void> => {
