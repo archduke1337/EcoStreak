@@ -28,6 +28,8 @@ export default function AdminUsersPage() {
     }, [user, loading, router]);
 
     const fetchUsers = async () => {
+        if (!user) return;
+        
         try {
             setDataLoading(true);
             const result = await fetchAdminUsers(user.email);
@@ -38,8 +40,8 @@ export default function AdminUsersPage() {
                 return;
             }
             
-            setUsers(result.users);
-            setFilteredUsers(result.users);
+            setUsers(result.users || []);
+            setFilteredUsers(result.users || []);
         } catch (error: any) {
             console.error('Fetch users error:', error);
             toast.error('Failed to load users');

@@ -165,6 +165,10 @@ export async function fetchAdminUsers(userEmail: string) {
             points: user.points || 0,
             level: user.level || 1,
             streak: user.streak || 0,
+            badges: user.badges || "[]",
+            lastActiveDate: user.lastActiveDate || new Date().toISOString().split("T")[0],
+            role: user.role || "student",
+            $createdAt: user.$createdAt || new Date().toISOString(),
         }));
 
         return {
@@ -176,6 +180,7 @@ export async function fetchAdminUsers(userEmail: string) {
         return {
             success: false,
             error: error.message || 'Failed to fetch admin users',
+            users: [],
         };
     }
 }

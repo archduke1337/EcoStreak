@@ -34,6 +34,8 @@ export default function AdminCollegesPage() {
     }, [user, loading, router]);
 
     const loadCollegeStats = async () => {
+        if (!user) return;
+        
         try {
             setLoadingStats(true);
             const result = await fetchCollegeStats(user.email);
