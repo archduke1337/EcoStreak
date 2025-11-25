@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Client, Databases, Query } from 'node-appwrite';
 import { SESSION_COOKIE } from '@/lib/auth-constants';
-import { APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, DATABASE_ID, USERS_COLLECTION_ID, TEAMS_COLLECTION_ID } from '@/lib/config';
+
+const APPWRITE_ENDPOINT = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+const APPWRITE_PROJECT_ID = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!;
+const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
+const TEAMS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID!;
 
 export async function GET(request: Request) {
     try {
