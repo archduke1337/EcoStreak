@@ -8,7 +8,14 @@ export async function POST(request: NextRequest) {
     try {
         const { name, college } = await request.json();
         
-        const { account, databases } = await createSessionClient();
+        let sessionClient;
+        try {
+            sessionClient = await createSessionClient();
+        } catch (e) {
+            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        }
+        
+        const { account, databases } = sessionClient;
         const accountData = await account.get();
         
         // Update account name
