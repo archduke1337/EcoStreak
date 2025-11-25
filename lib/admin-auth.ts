@@ -8,13 +8,23 @@ const ADMIN_EMAILS = [
 ];
 
 export function isAdmin(user: User | null): boolean {
-    if (!user) return false;
+    if (!user) {
+        console.log('[isAdmin] User is null');
+        return false;
+    }
+
+    console.log('[isAdmin] Checking user:', user.$id, 'email:', user.email, 'role:', user.role);
 
     // Check database role first
-    if (user.role === 'admin') return true;
+    if (user.role === 'admin') {
+        console.log('[isAdmin] User is admin via role field');
+        return true;
+    }
 
     // Fallback to hardcoded whitelist
-    return ADMIN_EMAILS.includes(user.email.toLowerCase());
+    const isInWhitelist = ADMIN_EMAILS.includes(user.email?.toLowerCase() || '');
+    console.log('[isAdmin] Email in whitelist:', isInWhitelist, 'email:', user.email?.toLowerCase());
+    return isInWhitelist;
 }
 
 export function getAdminEmails(): string[] {

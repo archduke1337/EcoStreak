@@ -37,6 +37,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         // Wait for auth to finish loading
+        console.log('[Admin] useEffect - loading:', loading, 'user:', user ? `${user.$id} (${user.email})` : 'null');
         if (loading) return;
         
         // Check authorization
@@ -46,7 +47,12 @@ export default function AdminPage() {
             return;
         }
         
-        if (!isAdmin(user)) {
+        const isUserAdmin = isAdmin(user);
+        console.log('[Admin] isAdmin check result:', isUserAdmin);
+        console.log('[Admin] User role:', user.role);
+        console.log('[Admin] User email:', user.email);
+        
+        if (!isUserAdmin) {
             console.log('[Admin] Not admin, redirecting to dashboard');
             toast.error('Admin access required');
             router.push('/dashboard');
