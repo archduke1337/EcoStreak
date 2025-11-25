@@ -5,13 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
 import Navbar from '@/components/Navbar';
-import { Card, CardBody, CardHeader } from '@nextui-org/react';
-import { databases, DATABASE_ID, USERS_COLLECTION_ID, TEAMS_COLLECTION_ID, Query } from '@/lib/appwrite';
-import { User, Team } from '@/types';
+import { Card, CardBody, CardHeader, Spinner } from '@nextui-org/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { logError } from '@/lib/error-handler';
+import { toast } from 'sonner';
 
 interface CollegeData {
     name: string;
@@ -26,6 +24,7 @@ interface LevelData {
 export default function AdminPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const [dataLoading, setDataLoading] = useState(true);
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalPoints: 0,
@@ -46,62 +45,27 @@ export default function AdminPage() {
 
     const fetchAdminData = async () => {
         try {
-            // Fetch all users
-            const usersResponse = await databases.listDocuments(
-                DATABASE_ID,
-                USERS_COLLECTION_ID,
-                [Query.limit(1000)]
-            );
-            const users = usersResponse.documents as unknown as User[];
-
-            // Calculate stats
-            const totalUsers = users.length;
-            const totalPoints = users.reduce((sum, u) => sum + u.points, 0);
-            const certificatesIssued = users.filter(u => u.points >= 1000).length;
-
-            const today = new Date().toISOString().split('T')[0];
-            const activeToday = users.filter(u => u.lastActiveDate === today).length;
-
-            // Fetch teams
-            const teamsResponse = await databases.listDocuments(
-                DATABASE_ID,
-                TEAMS_COLLECTION_ID,
-                [Query.limit(500)]
-            );
-            const totalTeams = teamsResponse.documents.length;
-
-            setStats({
-                totalUsers,
-                totalPoints,
-                certificatesIssued,
-                activeToday,
-                totalTeams,
-            });
-
-            // College-wise data
-            const collegeMap = new Map<string, number>();
-            users.forEach(u => {
-                collegeMap.set(u.college, (collegeMap.get(u.college) || 0) + 1);
-            });
-            const topColleges = Array.from(collegeMap.entries())
-                .map(([name, count]) => ({ name: name.substring(0, 30), count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
-            setCollegeData(topColleges);
-
-            // Level distribution
-            const levelMap = new Map<number, number>();
-            users.forEach(u => {
-                levelMap.set(u.level, (levelMap.get(u.level) || 0) + 1);
-            });
-            const levels = Array.from(levelMap.entries())
-                .map(([level, count]) => ({ level: `Level ${level}`, count }))
-                .sort((a, b) => parseInt(a.level.split(' ')[1]) - parseInt(b.level.split(' ')[1]))
-                .slice(0, 15);
-            setLevelData(levels);
-
-        } catch (error) {
-            logError(error, 'AdminPage.fetchAdminData');
+            setDataLoading(true);
+            const response = await fetch('/api/admin/stats');
+            
+            if (!response.ok) {
+                if (response.status === 403) {
+                    toast.error('Unauthorized access');
+                    router.push('/dashboard');
+                    return;
+                }
+                throw new Error('Failed to fetch admin data');
+            }
+            
+            const data = await response.json();
+            setStats(data.stats);
+            setCollegeData(data.collegeData);
+            setLevelData(data.levelData);
+        } catch (error: any) {
+            console.error('Admin data error:', error);
+            toast.error('Failed to load admin data');
+        } finally {
+            setDataLoading(false);
         }
     };
 
@@ -125,6 +89,12 @@ export default function AdminPage() {
                     </p>
                 </motion.div>
 
+                {dataLoading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <Spinner size="lg" color="success" label="Loading admin data..." />
+                    </div>
+                ) : (
+                    <>
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                     <Card>
@@ -229,6 +199,8 @@ export default function AdminPage() {
                         </CardBody>
                     </Card>
                 </div>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -1,0 +1,46 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createSessionClient } from "@/lib/appwrite-server";
+import { Query } from "node-appwrite";
+import { getAdminEmails } from "@/lib/admin-auth";
+
+const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
+
+export async function GET(request: NextRequest) {
+    try {
+        const { account, databases } = await createSessionClient();
+        const accountData = await account.get();
+        
+        // Check if user is admin
+        const adminEmails = getAdminEmails();
+        if (!adminEmails.includes(accountData.email.toLowerCase())) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        // Fetch all users
+        const response = await databases.listDocuments(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            [Query.limit(1000), Query.orderDesc('points')]
+        );
+
+        // Add email to each user from their account (email is not stored in collection)
+        const users = response.documents.map((doc: any) => ({
+            $id: doc.$id,
+            name: doc.name,
+            email: doc.email || `user_${doc.$id}@ecostreak.app`, // Placeholder since email not in collection
+            college: doc.college || 'Unknown',
+            points: doc.points || 0,
+            level: doc.level || 1,
+            badges: doc.badges || [],
+            streak: doc.streak || 0,
+            lastActiveDate: doc.lastActiveDate,
+            role: doc.role || 'student',
+        }));
+
+        return NextResponse.json({ users });
+    } catch (error: any) {
+        console.error('Admin users error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

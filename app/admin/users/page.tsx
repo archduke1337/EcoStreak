@@ -5,11 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
 import Navbar from '@/components/Navbar';
-import { Card, CardBody, Input, Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip } from '@nextui-org/react';
-import { databases, DATABASE_ID, USERS_COLLECTION_ID, Query } from '@/lib/appwrite';
+import { Card, CardBody, Input, Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Spinner } from '@nextui-org/react';
 import { User } from '@/types';
 import { toast } from 'sonner';
-import { handleError } from '@/lib/error-handler';
+import Link from 'next/link';
 
 export default function AdminUsersPage() {
     const { user, loading } = useAuth();
@@ -17,6 +16,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [dataLoading, setDataLoading] = useState(true);
 
     useEffect(() => {
         if (!loading && (!user || !isAdmin(user))) {
@@ -28,16 +28,26 @@ export default function AdminUsersPage() {
 
     const fetchUsers = async () => {
         try {
-            const response = await databases.listDocuments(
-                DATABASE_ID,
-                USERS_COLLECTION_ID,
-                [Query.limit(1000), Query.orderDesc('points')]
-            );
-            const usersData = response.documents as unknown as User[];
-            setUsers(usersData);
-            setFilteredUsers(usersData);
-        } catch (error) {
-            toast.error(handleError(error, 'AdminUsersPage.fetchUsers'));
+            setDataLoading(true);
+            const response = await fetch('/api/admin/users');
+            
+            if (!response.ok) {
+                if (response.status === 403) {
+                    toast.error('Unauthorized access');
+                    router.push('/dashboard');
+                    return;
+                }
+                throw new Error('Failed to fetch users');
+            }
+            
+            const data = await response.json();
+            setUsers(data.users);
+            setFilteredUsers(data.users);
+        } catch (error: any) {
+            console.error('Fetch users error:', error);
+            toast.error('Failed to load users');
+        } finally {
+            setDataLoading(false);
         }
     };
 
@@ -91,10 +101,21 @@ export default function AdminUsersPage() {
 
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-2">👥 User Management</h1>
+                    <div className="flex items-center gap-4 mb-2">
+                        <Link href="/admin">
+                            <Button variant="light" size="sm">← Back to Admin</Button>
+                        </Link>
+                        <h1 className="text-4xl font-bold">👥 User Management</h1>
+                    </div>
                     <p className="text-gray-600 dark:text-gray-400">Total Users: {users.length}</p>
                 </div>
 
+                {dataLoading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <Spinner size="lg" color="success" label="Loading users..." />
+                    </div>
+                ) : (
+                    <>
                 <Card className="mb-6">
                     <CardBody className="p-6">
                         <div className="flex gap-4 items-end">
@@ -127,7 +148,7 @@ export default function AdminUsersPage() {
                                     <TableColumn>STREAK</TableColumn>
                                     <TableColumn>ROLE</TableColumn>
                                 </TableHeader>
-                                <TableBody>
+                                <TableBody emptyContent="No users found.">
                                     {filteredUsers.map((u) => (
                                         <TableRow key={u.$id}>
                                             <TableCell>
@@ -139,13 +160,13 @@ export default function AdminUsersPage() {
                                                 <span className="font-bold text-green-600">{u.points}</span>
                                             </TableCell>
                                             <TableCell>{u.level}</TableCell>
-                                            <TableCell>{u.badges.length}</TableCell>
+                                            <TableCell>{u.badges?.length || 0}</TableCell>
                                             <TableCell>
-                                                <span className="text-orange-600">{u.streak} 🔥</span>
+                                                <span className="text-orange-600">{u.streak || 0} 🔥</span>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip color={u.role === 'admin' ? 'warning' : 'default'} size="sm">
-                                                    {u.role}
+                                                    {u.role || 'student'}
                                                 </Chip>
                                             </TableCell>
                                         </TableRow>
@@ -159,6 +180,8 @@ export default function AdminUsersPage() {
                 <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
                     Showing {filteredUsers.length} of {users.length} users
                 </p>
+                    </>
+                )}
             </div>
         </div>
     );
