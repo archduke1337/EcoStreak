@@ -4,6 +4,12 @@ import { validateEnvironmentVariables } from './env-validation';
 // Validate all required environment variables
 validateEnvironmentVariables();
 
+// Log configuration in development (helps debug deployment issues)
+if (typeof window !== 'undefined') {
+    console.log('[Appwrite] Endpoint:', process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT);
+    console.log('[Appwrite] Project ID:', process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
+}
+
 const client = new Client()
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);

@@ -132,11 +132,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signup = async (email: string, password: string, name: string, college: string): Promise<void> => {
         try {
+            console.log('Attempting signup for:', email);
+            
             // 1. Create the account
             const newAcc = await account.create(ID.unique(), email, password, name);
+            console.log('Account created successfully:', newAcc.$id);
 
             // 2. Create the session immediately so we have permission to write to the database
             await account.createEmailPasswordSession(email, password);
+            console.log('Session created successfully');
 
             // 3. Create the user document
             const adminEmails = getAdminEmails();
@@ -160,7 +164,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             );
 
             setUser(mapDocToUser(userDoc, email));
-        } catch (e) {
+            console.log('Signup completed successfully');
+        } catch (e: any) {
+            console.error('Signup error details:', e);
+            
+            // Handle specific "missing scope" error which means cookie was blocked/lost
+            if (e.message && (e.message.includes('missing scope') || e.code === 401)) {
+                throw new Error('Browser blocked the session cookie. Please disable "Block Third-Party Cookies" or try a different browser.');
+            }
+            
             const msg = handleError(e, 'AuthContext.signup');
             throw new Error(msg);
         }
