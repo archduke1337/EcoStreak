@@ -119,10 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('User data fetched successfully');
         } catch (e: any) {
             console.error('Login error details:', e);
-            // Check if it's specifically the account.get() failing
-            if (e.message && e.message.includes('missing scope')) {
-                console.error('Session cookie was not persisted!');
+
+            // Handle specific "missing scope" error which means cookie was blocked/lost
+            if (e.message && (e.message.includes('missing scope') || e.code === 401)) {
+                throw new Error('Browser blocked the session cookie. Please disable "Block Third-Party Cookies" or try a different browser.');
             }
+
             const msg = handleError(e, 'AuthContext.login');
             throw new Error(msg);
         }
