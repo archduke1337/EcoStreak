@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '@/types';
-import { signInWithEmail, signUpWithEmail, signOut, updateUserStats as updateUserStatsAction, updateUserProfile as updateUserProfileAction } from '@/lib/auth-actions';
+import { signInWithEmail, signUpWithEmail, signOut, updateUserStats as updateUserStatsAction, updateUserProfile as updateUserProfileAction, getCurrentUser } from '@/lib/auth-actions';
 
 interface AuthContextType {
     user: User | null;
@@ -24,10 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Fetch current user on mount
     const fetchCurrentUser = useCallback(async () => {
         try {
-            const response = await fetch('/api/auth/me');
-            if (response.ok) {
-                const data = await response.json();
-                setUser(data.user);
+            const result = await getCurrentUser();
+            if (result.success && result.user) {
+                setUser(result.user);
             } else {
                 setUser(null);
             }

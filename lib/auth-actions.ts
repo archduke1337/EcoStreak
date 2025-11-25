@@ -211,3 +211,44 @@ export async function updateUserProfile(userId: string, name: string, college: s
         };
     }
 }
+
+export async function getCurrentUser() {
+    try {
+        const { account, databases } = await createAdminClient();
+        
+        // Get current session user
+        const session = await account.getSession('current');
+        if (!session) {
+            return { success: false, user: null };
+        }
+
+        // Fetch user data from database
+        const user = await databases.getDocument(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            session.userId
+        );
+
+        return {
+            success: true,
+            user: {
+                $id: user.$id,
+                name: user.name,
+                email: user.email,
+                college: user.college,
+                points: user.points || 0,
+                level: user.level || 1,
+                streak: user.streak || 0,
+                badges: user.badges || "[]",
+                completedTasks: user.completedTasks || "[]",
+                teamId: user.teamId || null,
+                lastActiveDate: user.lastActiveDate,
+                role: user.role || "student",
+                $createdAt: user.$createdAt,
+            }
+        };
+    } catch (error: any) {
+        console.error("Get current user error:", error);
+        return { success: false, user: null };
+    }
+}
