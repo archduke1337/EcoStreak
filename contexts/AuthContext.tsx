@@ -23,23 +23,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Fetch current user on mount
     const fetchCurrentUser = useCallback(async () => {
-        console.log('[Auth] fetchCurrentUser called');
         try {
             const response = await fetch('/api/auth/me');
-            console.log('[Auth] /api/auth/me response status:', response.status);
             if (response.ok) {
                 const data = await response.json();
-                console.log('[Auth] User data received:', data.user ? `${data.user.$id}` : 'null');
                 setUser(data.user);
             } else {
-                console.log('[Auth] Auth failed, setting user to null');
                 setUser(null);
             }
         } catch (error) {
             console.error('[Auth] Error fetching user:', error);
             setUser(null);
         } finally {
-            console.log('[Auth] Setting loading to false');
             setLoading(false);
         }
     }, []);
@@ -49,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string): Promise<void> => {
-        console.log('[Auth] login() called for:', email);
         const result = await signInWithEmail({ email, password });
         
         if (!result.success) {
@@ -57,21 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error(result.error);
         }
         
-        console.log('[Auth] Login successful, user data:', result.user ? `${result.user.$id}` : 'null');
         // Set user directly from server action response
         if (result.user) {
-            console.log('[Auth] Setting user from login response');
             setUser(result.user);
             setLoading(false);
         } else {
             // Fallback to fetching user data
-            console.log('[Auth] No user in response, fetching from API');
             await fetchCurrentUser();
         }
     };
 
     const signup = async (email: string, password: string, name: string, college: string): Promise<void> => {
-        console.log('[Auth] signup() called for:', email);
         const result = await signUpWithEmail({ email, password, name, college });
         
         if (!result.success) {
@@ -79,15 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error(result.error);
         }
         
-        console.log('[Auth] Signup successful, user data:', result.user ? `${result.user.$id}` : 'null');
         // Set user directly from server action response
         if (result.user) {
-            console.log('[Auth] Setting user from signup response');
             setUser(result.user);
             setLoading(false);
         } else {
             // Fallback to fetching user data
-            console.log('[Auth] No user in response, fetching from API');
             await fetchCurrentUser();
         }
     };
