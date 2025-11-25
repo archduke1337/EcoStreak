@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionClient } from "@/lib/appwrite-server";
+import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
 import { Query } from "node-appwrite";
 import { getAdminEmails } from "@/lib/admin-auth";
 
@@ -9,15 +9,17 @@ const TEAMS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID
 
 export async function GET(request: NextRequest) {
     try {
-        let sessionClient;
+        // Verify user is authenticated via session
+        let accountData;
         try {
-            sessionClient = await createSessionClient();
+            const sessionClient = await createSessionClient();
+            accountData = await sessionClient.account.get();
         } catch (e) {
             return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
         }
         
-        const { account, databases } = sessionClient;
-        const accountData = await account.get();
+        // Use admin client for database operations (full access)
+        const { databases } = await createAdminClient();
         
         // Check if user is admin by email
         const adminEmails = getAdminEmails();
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
         }
 
-        // Fetch all users
+        // Fetch all users using admin client
         const usersResponse = await databases.listDocuments(
             DATABASE_ID,
             USERS_COLLECTION_ID,
