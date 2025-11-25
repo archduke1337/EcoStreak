@@ -16,24 +16,6 @@ client
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
 
-// Helper to get/set session for persistence workaround
-export const sessionStorage = {
-    getSession: (): string | null => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem('appwrite_session_secret');
-    },
-    setSession: (secret: string) => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('appwrite_session_secret', secret);
-        }
-    },
-    clearSession: () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('appwrite_session_secret');
-        }
-    }
-};
-
 export const account = new Account(client);
 export const databases = new Databases(client);
 

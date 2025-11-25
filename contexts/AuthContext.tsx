@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, ID, Query, client, sessionStorage } from '@/lib/appwrite';
+import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, ID, Query } from '@/lib/appwrite';
 import { User } from '@/types';
 import { Models } from 'appwrite';
 import { getAdminEmails } from '@/lib/admin-auth';
@@ -94,18 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const init = async () => {
             try {
-                // Restore session from localStorage if available (workaround for third-party cookie blocking)
-                const storedSession = sessionStorage.getSession();
-                if (storedSession) {
-                    client.setSession(storedSession);
-                    console.log('[Auth] Restored session from localStorage');
-                }
-                
                 const acc = await account.get();
                 await fetchUserData(acc);
             } catch (e: any) {
                 console.log('[Auth] No active session:', e.message);
-                sessionStorage.clearSession(); // Clear invalid session
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -125,14 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const session = await account.createEmailPasswordSession(email, password);
             console.log('Session created:', session.$id);
             
-            // Store the session secret for persistence (workaround for third-party cookie blocking)
-            if (session.secret) {
-                sessionStorage.setSession(session.secret);
-                client.setSession(session.secret);
-                console.log('Session secret stored');
-            }
-            
-            // Small delay to ensure session is fully established
+            // Small delay to ensure session cookie is set
             await new Promise(resolve => setTimeout(resolve, 100));
             
             console.log('Fetching account...');
@@ -150,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             // Handle specific "missing scope" error which means cookie was blocked/lost
             if (e.message && (e.message.includes('missing scope') || e.message.includes('guest'))) {
-                throw new Error('Session cookie blocked. Please ensure your Vercel domain is added to Appwrite Platforms, or try disabling "Block Third-Party Cookies" in your browser settings.');
+                throw new Error('Session failed. Please add "ecostreak.vercel.app" to your Appwrite project Platforms (Overview → Platforms → Add Web).');
             }
             
             if (e.code === 401) {
@@ -173,13 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 2. Create the session immediately so we have permission to write to the database
             const session = await account.createEmailPasswordSession(email, password);
             console.log('Session created successfully');
-            
-            // Store the session secret for persistence (workaround for third-party cookie blocking)
-            if (session.secret) {
-                sessionStorage.setSession(session.secret);
-                client.setSession(session.secret);
-                console.log('Session secret stored');
-            }
 
             // 3. Create the user document
             const adminEmails = getAdminEmails();
@@ -209,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             // Handle specific "missing scope" error which means cookie was blocked/lost
             if (e.message && (e.message.includes('missing scope') || e.code === 401)) {
-                throw new Error('Browser blocked the session cookie. Please disable "Block Third-Party Cookies" or try a different browser.');
+                throw new Error('Session failed. Please add "ecostreak.vercel.app" to your Appwrite project Platforms.');
             }
             
             const msg = handleError(e, 'AuthContext.signup');
@@ -223,8 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.log('[Auth] Logout error (may be expected if session expired):', e);
         } finally {
-            // Always clear local session and state
-            sessionStorage.clearSession();
             setUser(null);
         }
     };
