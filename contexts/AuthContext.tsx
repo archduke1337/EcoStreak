@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, ID, Query } from '@/lib/appwrite';
+import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, ID, Query, client, sessionStorage } from '@/lib/appwrite';
 import { User } from '@/types';
 import { Models } from 'appwrite';
 import { getAdminEmails } from '@/lib/admin-auth';
@@ -94,9 +94,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const init = async () => {
             try {
+                // Restore session from localStorage if available (workaround for third-party cookie blocking)
+                const storedSession = sessionStorage.getSession();
+                if (storedSession) {
+                    client.setSession(storedSession);
+                    console.log('[Auth] Restored session from localStorage');
+                }
+                
                 const acc = await account.get();
                 await fetchUserData(acc);
-            } catch (e) {
+            } catch (e: any) {
+                console.log('[Auth] No active session:', e.message);
+                sessionStorage.clearSession(); // Clear invalid session
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -111,18 +120,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string): Promise<void> => {
         try {
             console.log('Attempting login for:', email);
-            await account.createEmailPasswordSession(email, password);
-            console.log('Session created successfully. Fetching account...');
+            
+            // Create the session
+            const session = await account.createEmailPasswordSession(email, password);
+            console.log('Session created:', session.$id);
+            
+            // Store the session secret for persistence (workaround for third-party cookie blocking)
+            if (session.secret) {
+                sessionStorage.setSession(session.secret);
+                client.setSession(session.secret);
+                console.log('Session secret stored');
+            }
+            
+            // Small delay to ensure session is fully established
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            console.log('Fetching account...');
             const acc = await account.get();
             console.log('Account fetched:', acc.$id);
             await fetchUserData(acc);
             console.log('User data fetched successfully');
         } catch (e: any) {
-            console.error('Login error details:', e);
+            console.error('Login error details:', {
+                message: e.message,
+                code: e.code,
+                type: e.type,
+                response: e.response
+            });
 
             // Handle specific "missing scope" error which means cookie was blocked/lost
-            if (e.message && (e.message.includes('missing scope') || e.code === 401)) {
-                throw new Error('Browser blocked the session cookie. Please disable "Block Third-Party Cookies" or try a different browser.');
+            if (e.message && (e.message.includes('missing scope') || e.message.includes('guest'))) {
+                throw new Error('Session cookie blocked. Please ensure your Vercel domain is added to Appwrite Platforms, or try disabling "Block Third-Party Cookies" in your browser settings.');
+            }
+            
+            if (e.code === 401) {
+                throw new Error('Invalid email or password. Please try again.');
             }
 
             const msg = handleError(e, 'AuthContext.login');
@@ -139,8 +171,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('Account created successfully:', newAcc.$id);
 
             // 2. Create the session immediately so we have permission to write to the database
-            await account.createEmailPasswordSession(email, password);
+            const session = await account.createEmailPasswordSession(email, password);
             console.log('Session created successfully');
+            
+            // Store the session secret for persistence (workaround for third-party cookie blocking)
+            if (session.secret) {
+                sessionStorage.setSession(session.secret);
+                client.setSession(session.secret);
+                console.log('Session secret stored');
+            }
 
             // 3. Create the user document
             const adminEmails = getAdminEmails();
@@ -181,10 +220,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = async (): Promise<void> => {
         try {
             await account.deleteSession('current');
-            setUser(null);
         } catch (e) {
-            const msg = handleError(e, 'AuthContext.logout');
-            throw new Error(msg);
+            console.log('[Auth] Logout error (may be expected if session expired):', e);
+        } finally {
+            // Always clear local session and state
+            sessionStorage.clearSession();
+            setUser(null);
         }
     };
 
