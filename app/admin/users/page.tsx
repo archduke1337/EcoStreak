@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
+import { fetchAdminUsers } from '@/lib/admin-actions';
 import Navbar from '@/components/Navbar';
 import { Card, CardBody, Input, Button, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Chip, Spinner } from '@nextui-org/react';
 import { User } from '@/types';
@@ -29,20 +30,16 @@ export default function AdminUsersPage() {
     const fetchUsers = async () => {
         try {
             setDataLoading(true);
-            const response = await fetch('/api/admin/users');
+            const result = await fetchAdminUsers(user.email);
             
-            if (!response.ok) {
-                if (response.status === 403) {
-                    toast.error('Unauthorized access');
-                    router.push('/dashboard');
-                    return;
-                }
-                throw new Error('Failed to fetch users');
+            if (!result.success) {
+                toast.error(result.error || 'Failed to fetch users');
+                router.push('/dashboard');
+                return;
             }
             
-            const data = await response.json();
-            setUsers(data.users);
-            setFilteredUsers(data.users);
+            setUsers(result.users);
+            setFilteredUsers(result.users);
         } catch (error: any) {
             console.error('Fetch users error:', error);
             toast.error('Failed to load users');

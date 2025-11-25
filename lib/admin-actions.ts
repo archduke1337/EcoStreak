@@ -85,3 +85,97 @@ export async function fetchAdminStats(userEmail: string) {
         };
     }
 }
+
+export async function fetchCollegeStats(userEmail: string) {
+    try {
+        // Verify user is admin
+        if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
+            throw new Error("Unauthorized - Admin access required");
+        }
+
+        const { databases } = await createAdminClient();
+
+        // Fetch all users
+        const usersResponse = await databases.listDocuments(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            [Query.limit(1000)]
+        );
+        const users = usersResponse.documents;
+
+        // Calculate college statistics
+        const collegeMap = new Map<string, { users: number; totalPoints: number }>();
+        
+        users.forEach((user: any) => {
+            const college = user.college || "Unknown";
+            const points = user.points || 0;
+            
+            if (!collegeMap.has(college)) {
+                collegeMap.set(college, { users: 0, totalPoints: 0 });
+            }
+            
+            const stats = collegeMap.get(college)!;
+            stats.users += 1;
+            stats.totalPoints += points;
+        });
+
+        const collegeStats = Array.from(collegeMap.entries())
+            .map(([college, { users, totalPoints }]) => ({
+                college,
+                users,
+                totalPoints,
+                avgPoints: users > 0 ? Math.round(totalPoints / users) : 0,
+            }))
+            .sort((a, b) => b.totalPoints - a.totalPoints);
+
+        return {
+            success: true,
+            collegeStats,
+        };
+    } catch (error: any) {
+        console.error('College stats error:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to fetch college stats',
+        };
+    }
+}
+
+export async function fetchAdminUsers(userEmail: string) {
+    try {
+        // Verify user is admin
+        if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
+            throw new Error("Unauthorized - Admin access required");
+        }
+
+        const { databases } = await createAdminClient();
+
+        // Fetch all users
+        const usersResponse = await databases.listDocuments(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            [Query.limit(1000)]
+        );
+
+        const users = usersResponse.documents.map((user: any) => ({
+            $id: user.$id,
+            name: user.name,
+            email: user.email,
+            college: user.college,
+            points: user.points || 0,
+            level: user.level || 1,
+            streak: user.streak || 0,
+        }));
+
+        return {
+            success: true,
+            users,
+        };
+    } catch (error: any) {
+        console.error('Admin users error:', error);
+        return {
+            success: false,
+            error: error.message || 'Failed to fetch admin users',
+        };
+    }
+}

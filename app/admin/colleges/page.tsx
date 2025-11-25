@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
+import { fetchCollegeStats } from '@/lib/admin-actions';
 import Navbar from '@/components/Navbar';
 import { Card, CardBody, CardHeader, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Spinner, Button } from '@nextui-org/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -28,26 +29,22 @@ export default function AdminCollegesPage() {
         if (!loading && (!user || !isAdmin(user))) {
             router.push('/dashboard');
         } else if (user && isAdmin(user)) {
-            fetchCollegeStats();
+            loadCollegeStats();
         }
     }, [user, loading, router]);
 
-    const fetchCollegeStats = async () => {
+    const loadCollegeStats = async () => {
         try {
             setLoadingStats(true);
-            const response = await fetch('/api/admin/colleges');
-            if (!response.ok) {
-                if (response.status === 403) {
-                    toast.error('Unauthorized access');
-                    router.push('/dashboard');
-                    return;
-                }
-                throw new Error('Failed to fetch college stats');
+            const result = await fetchCollegeStats(user.email);
+            if (!result.success) {
+                toast.error(result.error || 'Failed to fetch college stats');
+                router.push('/dashboard');
+                return;
             }
-            const data = await response.json();
-            setCollegeStats(data.collegeStats || []);
+            setCollegeStats(result.collegeStats || []);
         } catch (error) {
-            logError(error, 'AdminCollegesPage.fetchCollegeStats');
+            logError(error, 'AdminCollegesPage.loadCollegeStats');
             toast.error('Failed to load college data');
         } finally {
             setLoadingStats(false);
