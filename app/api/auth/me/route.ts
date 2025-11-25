@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionClient } from "@/lib/appwrite-server";
-import { Databases } from "node-appwrite";
+import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
 
 export async function GET(request: NextRequest) {
     try {
-        const { account, databases } = await createSessionClient();
+        // Verify user is authenticated via session
+        let accountData;
+        try {
+            const { account } = await createSessionClient();
+            accountData = await account.get();
+        } catch (e) {
+            // No valid session
+            return NextResponse.json({ user: null }, { status: 401 });
+        }
         
-        // Get account info
-        const accountData = await account.get();
+        // Use admin client for database access (full permissions)
+        const { databases } = await createAdminClient();
         
         // Get user document from database
         let userDoc;
@@ -66,7 +73,7 @@ export async function GET(request: NextRequest) {
             }
         });
     } catch (error: any) {
-        // No valid session
+        console.error('Auth me error:', error);
         return NextResponse.json({ user: null }, { status: 401 });
     }
 }

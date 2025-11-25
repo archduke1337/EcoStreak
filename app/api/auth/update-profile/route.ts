@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionClient } from "@/lib/appwrite-server";
+import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
@@ -8,18 +8,19 @@ export async function POST(request: NextRequest) {
     try {
         const { name, college } = await request.json();
         
-        let sessionClient;
+        // Verify user is authenticated via session
+        let accountData;
         try {
-            sessionClient = await createSessionClient();
+            const { account } = await createSessionClient();
+            accountData = await account.get();
+            // Update account name using session client
+            await account.updateName(name);
         } catch (e) {
             return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
         }
         
-        const { account, databases } = sessionClient;
-        const accountData = await account.get();
-        
-        // Update account name
-        await account.updateName(name);
+        // Use admin client for database operations
+        const { databases } = await createAdminClient();
         
         // Update user document
         await databases.updateDocument(
