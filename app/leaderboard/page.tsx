@@ -5,10 +5,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Card, CardBody, Tabs, Tab, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
-import { databases, DATABASE_ID, USERS_COLLECTION_ID, TEAMS_COLLECTION_ID, Query } from '@/lib/appwrite';
+import { databases, DATABASE_ID, USERS_COLLECTION_ID, TEAMS_COLLECTION_ID, Query, client } from '@/lib/appwrite';
 import { User, Team } from '@/types';
 import { motion } from 'framer-motion';
-import client from '@/lib/appwrite';
 import { logError } from '@/lib/error-handler';
 
 export default function LeaderboardPage() {
