@@ -1,9 +1,6 @@
-"use server";
-
 import { Client, Account, Databases } from "node-appwrite";
 import { cookies } from "next/headers";
-
-const SESSION_COOKIE = "ecostreak-session";
+import { SESSION_COOKIE } from "./auth-constants";
 
 export async function createSessionClient() {
     const client = new Client()
@@ -53,5 +50,3 @@ export async function getLoggedInUser() {
         return null;
     }
 }
-
-export { SESSION_COOKIE };

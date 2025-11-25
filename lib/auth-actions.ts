@@ -2,7 +2,8 @@
 
 import { ID } from "node-appwrite";
 import { cookies } from "next/headers";
-import { createAdminClient, SESSION_COOKIE } from "./appwrite-server";
+import { createAdminClient } from "./appwrite-server";
+import { SESSION_COOKIE } from "./auth-constants";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
