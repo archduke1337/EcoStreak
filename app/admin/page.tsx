@@ -25,6 +25,7 @@ export default function AdminPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [dataLoading, setDataLoading] = useState(true);
+    const [authChecked, setAuthChecked] = useState(false);
     const [stats, setStats] = useState({
         totalUsers: 0,
         totalPoints: 0,
@@ -36,11 +37,23 @@ export default function AdminPage() {
     const [levelData, setLevelData] = useState<LevelData[]>([]);
 
     useEffect(() => {
-        if (!loading && (!user || !isAdmin(user))) {
-            router.push('/dashboard');
-        } else if (user && isAdmin(user)) {
-            fetchAdminData();
-        }
+        // Wait for auth to finish loading before checking
+        if (loading) return;
+        
+        // Give a small delay to ensure user state is properly set
+        const timer = setTimeout(() => {
+            if (!user) {
+                router.push('/login');
+            } else if (!isAdmin(user)) {
+                toast.error('Admin access required');
+                router.push('/dashboard');
+            } else {
+                setAuthChecked(true);
+                fetchAdminData();
+            }
+        }, 100);
+        
+        return () => clearTimeout(timer);
     }, [user, loading, router]);
 
     const fetchAdminData = async () => {
@@ -75,7 +88,14 @@ export default function AdminPage() {
         }
     };
 
-    if (loading || !user || !isAdmin(user)) return null;
+    // Show loading while checking auth
+    if (loading || !authChecked) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Spinner size="lg" color="success" label="Loading..." />
+            </div>
+        );
+    }
 
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
