@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '@/types';
-import { signInWithEmail, signUpWithEmail, signOut } from '@/lib/auth-actions';
+import { signInWithEmail, signUpWithEmail, signOut, updateUserStats as updateUserStatsAction } from '@/lib/auth-actions';
 
 interface AuthContextType {
     user: User | null;
@@ -104,15 +104,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updateUserStats = async (updates: Partial<User>): Promise<void> => {
-        const response = await fetch('/api/auth/update-stats', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-        });
+        if (!user) {
+            throw new Error('User not logged in');
+        }
+
+        const result = await updateUserStatsAction(user.$id, updates);
         
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to update stats');
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to update stats');
         }
         
         await fetchCurrentUser();

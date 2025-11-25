@@ -167,3 +167,25 @@ export async function signOut() {
         return { success: false, error: error.message };
     }
 }
+
+export async function updateUserStats(userId: string, updates: any) {
+    try {
+        const { databases } = await createAdminClient();
+
+        // Update the user document
+        await databases.updateDocument(
+            DATABASE_ID,
+            USERS_COLLECTION_ID,
+            userId,
+            updates
+        );
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update stats error:", error);
+        return { 
+            success: false, 
+            error: error.message || "Failed to update stats" 
+        };
+    }
+}
