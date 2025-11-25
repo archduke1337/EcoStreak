@@ -70,7 +70,8 @@ export async function signUpWithEmail(formData: {
             badges: [],
             streak: 0,
             lastActiveDate: new Date().toISOString().split("T")[0],
-            role: "student",
+            role: "student" as const,
+            $createdAt: new Date().toISOString(),
         };
 
         return { success: true, userId: newUser.$id, user: userData };
@@ -139,6 +140,7 @@ export async function signInWithEmail(formData: {
                 streak: userDoc.streak || 0,
                 lastActiveDate: userDoc.lastActiveDate || new Date().toISOString().split('T')[0],
                 role: userDoc.role || 'student',
+                $createdAt: userDoc.$createdAt || new Date().toISOString(),
             };
         } catch (e) {
             console.log('[Login] User doc not found, using basic data');
