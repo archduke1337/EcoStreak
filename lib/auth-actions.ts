@@ -17,26 +17,13 @@ export async function signUpWithEmail(formData: {
     const { email, password, name, college } = formData;
 
     try {
-        const { account, databases } = await createAdminClient();
+        const { account: adminAccount, databases } = await createAdminClient();
 
-        // 1. Create the user account
-        const newUser = await account.create(ID.unique(), email, password, name);
+        // 1. Create the user account using admin client
+        const newUser = await adminAccount.create(ID.unique(), email, password, name);
 
-        // 2. Create a session
-        const session = await account.createEmailPasswordSession(email, password);
-
-        // 3. Set session cookie (first-party cookie on your domain)
-        const cookieStore = await cookies();
-        cookieStore.set(SESSION_COOKIE, session.secret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "strict",
-            secure: true,
-            expires: new Date(session.expire),
-        });
-
-        // 4. Create user document in database
-        const userDoc = await databases.createDocument(
+        // 2. Create user document in database FIRST (before session)
+        await databases.createDocument(
             DATABASE_ID,
             USERS_COLLECTION_ID,
             newUser.$id,
@@ -51,6 +38,25 @@ export async function signUpWithEmail(formData: {
                 role: "student",
             }
         );
+
+        // 3. Create a session using a separate client (no API key)
+        const { Client, Account } = await import("node-appwrite");
+        const sessionClient = new Client()
+            .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+            .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+        
+        const sessionAccount = new Account(sessionClient);
+        const session = await sessionAccount.createEmailPasswordSession(email, password);
+
+        // 4. Set session cookie (first-party cookie on your domain)
+        const cookieStore = await cookies();
+        cookieStore.set(SESSION_COOKIE, session.secret, {
+            path: "/",
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            expires: new Date(session.expire),
+        });
 
         return { success: true, userId: newUser.$id };
     } catch (error: any) {
@@ -69,18 +75,22 @@ export async function signInWithEmail(formData: {
     const { email, password } = formData;
 
     try {
-        const { account } = await createAdminClient();
-
-        // Create session
-        const session = await account.createEmailPasswordSession(email, password);
+        // Create session using a client without API key
+        const { Client, Account } = await import("node-appwrite");
+        const sessionClient = new Client()
+            .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+            .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+        
+        const sessionAccount = new Account(sessionClient);
+        const session = await sessionAccount.createEmailPasswordSession(email, password);
 
         // Set session cookie (first-party cookie on your domain)
         const cookieStore = await cookies();
         cookieStore.set(SESSION_COOKIE, session.secret, {
             path: "/",
             httpOnly: true,
-            sameSite: "strict",
-            secure: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
             expires: new Date(session.expire),
         });
 
