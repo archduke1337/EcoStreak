@@ -110,10 +110,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // ---------------------------------------------------------------------
     const login = async (email: string, password: string): Promise<void> => {
         try {
+            console.log('Attempting login for:', email);
             await account.createEmailPasswordSession(email, password);
+            console.log('Session created successfully. Fetching account...');
             const acc = await account.get();
+            console.log('Account fetched:', acc.$id);
             await fetchUserData(acc);
-        } catch (e) {
+            console.log('User data fetched successfully');
+        } catch (e: any) {
+            console.error('Login error details:', e);
+            // Check if it's specifically the account.get() failing
+            if (e.message && e.message.includes('missing scope')) {
+                console.error('Session cookie was not persisted!');
+            }
             const msg = handleError(e, 'AuthContext.login');
             throw new Error(msg);
         }
