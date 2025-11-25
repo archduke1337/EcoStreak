@@ -71,6 +71,8 @@ export async function signUpWithEmail(formData: {
             streak: 0,
             lastActiveDate: new Date().toISOString().split("T")[0],
             role: "student" as const,
+            teamId: undefined,
+            completedTasks: '[]',
             $createdAt: new Date().toISOString(),
         };
 
@@ -140,6 +142,8 @@ export async function signInWithEmail(formData: {
                 streak: userDoc.streak || 0,
                 lastActiveDate: userDoc.lastActiveDate || new Date().toISOString().split('T')[0],
                 role: userDoc.role || 'student',
+                teamId: userDoc.teamId || undefined,
+                completedTasks: userDoc.completedTasks || '[]',
                 $createdAt: userDoc.$createdAt || new Date().toISOString(),
             };
         } catch (e) {
