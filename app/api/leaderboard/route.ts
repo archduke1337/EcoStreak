@@ -71,10 +71,10 @@ export async function GET(request: Request) {
 
             const teams = response.documents.map((doc: any) => ({
                 $id: doc.$id,
-                name: doc.name,
-                description: doc.description || '',
+                name: doc.teamName,
+                teamCode: doc.teamCode,
                 totalPoints: doc.totalPoints || 0,
-                memberCount: doc.memberCount || 0,
+                memberCount: doc.members?.length || 0,
             }));
 
             return NextResponse.json({ teams });

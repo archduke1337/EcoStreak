@@ -4,57 +4,65 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Card, CardBody, Button, Input, Divider, Chip } from '@nextui-org/react';
-import { databases, DATABASE_ID, USERS_COLLECTION_ID, TEAMS_COLLECTION_ID, ID, Query } from '@/lib/appwrite';
-import { Team, User } from '@/types';
+import { Card, CardBody, Button, Input, Divider, Chip, Spinner } from '@nextui-org/react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { logError, handleError } from '@/lib/error-handler';
+
+interface TeamMember {
+    $id: string;
+    name: string;
+    college: string;
+    points: number;
+    level: number;
+}
+
+interface Team {
+    $id: string;
+    teamName: string;
+    teamCode: string;
+    leaderId: string;
+    totalPoints: number;
+    members: string[];
+}
 
 export default function TeamsPage() {
-    const { user, loading, refreshUser, updateUserStats } = useAuth();
+    const { user, loading, refreshUser } = useAuth();
     const router = useRouter();
     const [teamName, setTeamName] = useState('');
     const [joinCode, setJoinCode] = useState('');
     const [myTeam, setMyTeam] = useState<Team | null>(null);
-    const [teamMembers, setTeamMembers] = useState<User[]>([]);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [creatingTeam, setCreatingTeam] = useState(false);
     const [joiningTeam, setJoiningTeam] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const fetchTeam = useCallback(async () => {
-        if (!user?.teamId) return;
+        if (!user?.teamId) {
+            setIsLoading(false);
+            return;
+        }
 
         try {
-            const teamDoc = await databases.getDocument(
-                DATABASE_ID,
-                TEAMS_COLLECTION_ID,
-                user.teamId
-            );
-            setMyTeam(teamDoc as unknown as Team);
-
-            // Fetch team members
-            const membersResponse = await databases.listDocuments(
-                DATABASE_ID,
-                USERS_COLLECTION_ID,
-                [Query.equal('teamId', user.teamId)]
-            );
-            setTeamMembers(membersResponse.documents as unknown as User[]);
+            const res = await fetch(`/api/teams?teamId=${user.teamId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMyTeam(data.team);
+                setTeamMembers(data.members || []);
+            }
         } catch (error) {
-            logError(error, 'TeamsPage.fetchTeam');
+            console.error('Failed to fetch team:', error);
+        } finally {
+            setIsLoading(false);
         }
-    }, [user]);
+    }, [user?.teamId]);
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
-        } else if (user && user.teamId) {
+        } else if (user) {
             fetchTeam();
         }
     }, [user, loading, router, fetchTeam]);
-
-    const generateTeamCode = (): string => {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
-    };
 
     const handleCreateTeam = async () => {
         if (!teamName.trim()) {
@@ -65,32 +73,30 @@ export default function TeamsPage() {
         setCreatingTeam(true);
 
         try {
-            const code = generateTeamCode();
-
-            // Create team
-            const team = await databases.createDocument(
-                DATABASE_ID,
-                TEAMS_COLLECTION_ID,
-                ID.unique(),
-                {
+            const res = await fetch('/api/teams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create',
                     teamName,
-                    teamCode: code,
-                    leaderId: user!.$id,
-                    members: [user!.$id],
-                    totalPoints: user!.points,
-                }
-            );
-
-            // Update user with team ID
-            await updateUserStats({
-                teamId: team.$id
+                    userId: user!.$id,
+                    userPoints: user!.points,
+                }),
             });
 
-            // await refreshUser(); // updateUserStats updates local user
-            toast.success(`Team created! Share code: ${code}`);
-            setMyTeam(team as unknown as Team);
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data.error || 'Failed to create team');
+                return;
+            }
+
+            toast.success(`Team created! Share code: ${data.team.teamCode}`);
+            setMyTeam(data.team);
+            await refreshUser();
         } catch (error) {
-            toast.error(handleError(error, 'TeamsPage.handleCreateTeam'));
+            console.error('Failed to create team:', error);
+            toast.error('Failed to create team');
         } finally {
             setCreatingTeam(false);
         }
@@ -105,47 +111,47 @@ export default function TeamsPage() {
         setJoiningTeam(true);
 
         try {
-            // Find team by code
-            const teamsResponse = await databases.listDocuments(
-                DATABASE_ID,
-                TEAMS_COLLECTION_ID,
-                [Query.equal('teamCode', joinCode.toUpperCase())]
-            );
+            const res = await fetch('/api/teams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'join',
+                    teamCode: joinCode,
+                    userId: user!.$id,
+                    userPoints: user!.points,
+                }),
+            });
 
-            if (teamsResponse.documents.length === 0) {
-                toast.error('Invalid team code');
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data.error || 'Failed to join team');
                 return;
             }
 
-            const team = teamsResponse.documents[0] as unknown as Team;
-
-            // Update team members
-            await databases.updateDocument(
-                DATABASE_ID,
-                TEAMS_COLLECTION_ID,
-                team.$id,
-                {
-                    members: [...team.members, user!.$id],
-                    totalPoints: team.totalPoints + user!.points,
-                }
-            );
-
-            // Update user with team ID
-            await updateUserStats({
-                teamId: team.$id
-            });
-
-            // await refreshUser(); // updateUserStats updates local user
-            toast.success(`Joined team: ${team.teamName}!`);
-            setMyTeam(team);
+            toast.success(`Joined team: ${data.team.teamName}!`);
+            setMyTeam(data.team);
+            await refreshUser();
         } catch (error) {
-            toast.error(handleError(error, 'TeamsPage.handleJoinTeam'));
+            console.error('Failed to join team:', error);
+            toast.error('Failed to join team');
         } finally {
             setJoiningTeam(false);
         }
     };
 
     if (loading || !user) return null;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Navbar />
+                <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+                    <Spinner size="lg" color="success" />
+                </div>
+            </div>
+        );
+    }
 
     // If user has a team
     if (myTeam || user.teamId) {
