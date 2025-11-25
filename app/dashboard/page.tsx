@@ -22,7 +22,9 @@ export default function DashboardPage() {
     useKeyboardShortcuts();
 
     useEffect(() => {
+        console.log('[Dashboard] useEffect - user:', user ? user.$id : null, 'loading:', loading);
         if (!loading && !user) {
+            console.log('[Dashboard] No user, redirecting to login');
             router.push('/login');
         }
     }, [user, loading, router]);

@@ -18,7 +18,9 @@ export default function LoginPage() {
 
     // Redirect if already logged in
     useEffect(() => {
+        console.log('[Login] useEffect - user:', user ? user.$id : null, 'loading:', loading);
         if (!loading && user) {
+            console.log('[Login] User already logged in, redirecting to dashboard');
             router.push('/dashboard');
         }
     }, [user, loading, router]);
