@@ -37,17 +37,23 @@ export default function AdminPage() {
     const [levelData, setLevelData] = useState<LevelData[]>([]);
 
     useEffect(() => {
+        console.log('[Admin] useEffect - loading:', loading, 'user:', user?.email, 'authChecked:', authChecked);
+        
         // Wait for auth to finish loading before checking
         if (loading) return;
         
         // Give a small delay to ensure user state is properly set
         const timer = setTimeout(() => {
+            console.log('[Admin] Timer fired - user:', user?.email, 'isAdmin:', user ? isAdmin(user) : 'no user');
             if (!user) {
+                console.log('[Admin] No user, redirecting to login');
                 router.push('/login');
             } else if (!isAdmin(user)) {
+                console.log('[Admin] Not admin, redirecting to dashboard');
                 toast.error('Admin access required');
                 router.push('/dashboard');
             } else {
+                console.log('[Admin] Admin verified, fetching data');
                 setAuthChecked(true);
                 fetchAdminData();
             }
