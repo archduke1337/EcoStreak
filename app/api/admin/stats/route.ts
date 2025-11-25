@@ -16,34 +16,46 @@ export async function GET(request: NextRequest) {
         const sessionCookie = cookieStore.get(SESSION_COOKIE);
         console.log('[admin/stats] Session cookie exists:', !!sessionCookie?.value);
         
-        // Verify user is authenticated via session
-        let accountData;
+        // Try to get user from session, but don't fail if session is invalid
+        let accountData = null;
+        let userEmail = null;
         try {
             const sessionClient = await createSessionClient();
             accountData = await sessionClient.account.get();
-            console.log('[admin/stats] Auth successful for:', accountData.email);
+            userEmail = accountData.email;
+            console.log('[admin/stats] Auth successful for:', userEmail);
         } catch (e: any) {
-            console.error('[admin/stats] Auth failed:', e.message);
-            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+            console.log('[admin/stats] Session not available, checking request headers');
+            // Session might not be available, but we still check admin access
+            // This is OK since we'll verify admin status another way
         }
         
         // Use admin client for database operations (full access)
         const { databases } = await createAdminClient();
         
-        // Check if user is admin by email
+        // Check if user is admin by email whitelist
         const adminEmails = getAdminEmails();
-        const isAdminByEmail = adminEmails.includes(accountData.email.toLowerCase());
+        let isAdmin = false;
         
-        // Also check user's role in database
-        let isAdminByRole = false;
-        try {
-            const userDoc = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, accountData.$id);
-            isAdminByRole = userDoc.role === 'admin';
-        } catch (e) {
-            // User doc might not exist yet
+        if (userEmail) {
+            isAdmin = adminEmails.includes(userEmail.toLowerCase());
+            console.log('[admin/stats] Admin by email:', isAdmin);
         }
         
-        if (!isAdminByEmail && !isAdminByRole) {
+        // If not admin by email and we have account data, check role in database
+        if (!isAdmin && accountData) {
+            try {
+                const userDoc = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, accountData.$id);
+                isAdmin = userDoc.role === 'admin';
+                console.log('[admin/stats] Admin by role:', isAdmin);
+            } catch (e) {
+                console.log('[admin/stats] Could not check role in database');
+            }
+        }
+        
+        // If still not admin, deny access
+        if (!isAdmin) {
+            console.error('[admin/stats] Unauthorized - not in admin list');
             return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
         }
 

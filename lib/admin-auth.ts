@@ -1,7 +1,7 @@
 import { User } from '@/types';
 
 // Admin whitelist emails
-const ADMIN_EMAILS = [
+export const ADMIN_EMAILS = [
     'gauravramyadav@gmail.com',
     'jaydeepshirsath13@gmail.com',
     'principal@yourcollege.ac.in',

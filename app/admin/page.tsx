@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
+import { fetchAdminStats } from '@/lib/admin-actions';
 import Navbar from '@/components/Navbar';
 import { Card, CardBody, CardHeader, Spinner } from '@nextui-org/react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -70,27 +71,17 @@ export default function AdminPage() {
     const fetchAdminData = async () => {
         try {
             setDataLoading(true);
-            const response = await fetch('/api/admin/stats');
+            const result = await fetchAdminStats(user.email);
             
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                if (response.status === 401) {
-                    toast.error('Please log in to access admin panel');
-                    router.push('/login');
-                    return;
-                }
-                if (response.status === 403) {
-                    toast.error('Unauthorized - Admin access required');
-                    router.push('/dashboard');
-                    return;
-                }
-                throw new Error(errorData.error || 'Failed to fetch admin data');
+            if (!result.success) {
+                toast.error(result.error || 'Failed to fetch admin data');
+                router.push('/dashboard');
+                return;
             }
             
-            const data = await response.json();
-            setStats(data.stats);
-            setCollegeData(data.collegeData);
-            setLevelData(data.levelData);
+            setStats(result.stats);
+            setCollegeData(result.collegeData);
+            setLevelData(result.levelData);
         } catch (error: any) {
             console.error('Admin data error:', error);
             toast.error(error.message || 'Failed to load admin data');
