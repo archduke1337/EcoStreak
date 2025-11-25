@@ -37,20 +37,33 @@ export default function AdminPage() {
 
     useEffect(() => {
         // Wait for auth to finish loading
-        if (loading) return;
+        if (loading) {
+            console.log('[Admin] Loading auth...');
+            return;
+        }
+        
+        console.log('[Admin] Auth loaded. User:', user ? { id: user.$id, email: user.email, role: user.role } : null);
         
         // Check authorization
         if (!user) {
+            console.log('[Admin] No user, redirecting to login');
             router.push('/login');
             return;
         }
         
-        if (!isAdmin(user)) {
+        const isUserAdmin = isAdmin(user);
+        console.log('[Admin] isAdmin result:', isUserAdmin);
+        console.log('[Admin] User email:', user.email);
+        console.log('[Admin] User role:', user.role);
+        
+        if (!isUserAdmin) {
+            console.log('[Admin] Not admin, redirecting to dashboard');
             toast.error('Admin access required');
             router.push('/dashboard');
             return;
         }
         
+        console.log('[Admin] Admin verified, fetching data');
         fetchAdminData();
     }, [user, loading, router]);
 
