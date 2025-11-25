@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE } from "@/lib/auth-constants";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
 
 export async function GET(request: NextRequest) {
     try {
+        // Debug: Check if cookie exists
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get(SESSION_COOKIE);
+        console.log('[Auth/me] Session cookie exists:', !!sessionCookie?.value);
+        
         // Verify user is authenticated via session
         let accountData;
         try {
             const { account } = await createSessionClient();
             accountData = await account.get();
-        } catch (e) {
+            console.log('[Auth/me] Account found:', accountData.$id);
+        } catch (e: any) {
             // No valid session
+            console.log('[Auth/me] Session error:', e.message);
             return NextResponse.json({ user: null }, { status: 401 });
         }
         

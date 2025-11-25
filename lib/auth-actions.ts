@@ -83,7 +83,9 @@ export async function signInWithEmail(formData: {
             .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
         
         const sessionAccount = new Account(sessionClient);
+        console.log('[Login] Creating session for:', email);
         const session = await sessionAccount.createEmailPasswordSession(email, password);
+        console.log('[Login] Session created, expires:', session.expire);
 
         // Set session cookie (first-party cookie on your domain)
         const cookieStore = await cookies();
@@ -94,6 +96,7 @@ export async function signInWithEmail(formData: {
             secure: process.env.NODE_ENV === "production",
             expires: new Date(session.expire),
         });
+        console.log('[Login] Cookie set successfully');
 
         return { success: true, userId: session.userId };
     } catch (error: any) {
