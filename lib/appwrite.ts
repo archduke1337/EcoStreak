@@ -10,7 +10,9 @@ if (typeof window !== 'undefined') {
     console.log('[Appwrite] Project ID:', process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID);
 }
 
-const client = new Client()
+const client = new Client();
+
+client
     .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
     .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
 
