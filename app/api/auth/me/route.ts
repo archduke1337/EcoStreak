@@ -8,13 +8,24 @@ const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID
 
 export async function GET(request: NextRequest) {
     try {
+        // Debug: Check if cookie exists
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get(SESSION_COOKIE);
+        console.log('[auth/me] Cookie exists:', !!sessionCookie?.value);
+        if (!sessionCookie?.value) {
+            console.log('[auth/me] No session cookie found, returning null user');
+            return NextResponse.json({ user: null }, { status: 401 });
+        }
+        
         // Verify user is authenticated via session
         let accountData;
         try {
             const { account } = await createSessionClient();
             accountData = await account.get();
+            console.log('[auth/me] Account found:', accountData.$id);
         } catch (e: any) {
             // No valid session
+            console.error('[auth/me] Session validation failed:', e.message);
             return NextResponse.json({ user: null }, { status: 401 });
         }
         

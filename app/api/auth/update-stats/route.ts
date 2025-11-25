@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE } from "@/lib/auth-constants";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!;
@@ -22,12 +24,19 @@ export async function POST(request: NextRequest) {
     try {
         const updates = await request.json();
         
+        // Debug: Log incoming request and cookies
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get(SESSION_COOKIE);
+        console.log('[update-stats] Cookie exists:', !!sessionCookie?.value);
+        
         // Verify user is authenticated via session
         let accountData;
         try {
             const { account } = await createSessionClient();
             accountData = await account.get();
-        } catch (e) {
+            console.log('[update-stats] Auth successful for user:', accountData.$id);
+        } catch (e: any) {
+            console.error('[update-stats] Auth failed:', e.message);
             return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
         }
         
