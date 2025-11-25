@@ -116,15 +116,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Create the session
             const session = await account.createEmailPasswordSession(email, password);
             console.log('Session created:', session.$id);
+            console.log('Session object keys:', Object.keys(session));
             
-            // Small delay to ensure session cookie is set
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Store session ID for potential recovery
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('appwrite_session_id', session.$id);
+                localStorage.setItem('appwrite_user_id', session.userId);
+            }
             
+            // Try to get account - if this fails, the cookie wasn't set
             console.log('Fetching account...');
-            const acc = await account.get();
-            console.log('Account fetched:', acc.$id);
-            await fetchUserData(acc);
-            console.log('User data fetched successfully');
+            try {
+                const acc = await account.get();
+                console.log('Account fetched:', acc.$id);
+                await fetchUserData(acc);
+                console.log('User data fetched successfully');
+            } catch (getError: any) {
+                console.error('Failed to get account after session creation:', getError);
+                // Session was created but cookie not set - this is the third-party cookie issue
+                throw new Error(
+                    'Login session created but browser blocked the cookie. ' +
+                    'Try one of these solutions:\n' +
+                    '1. Use Chrome/Edge and disable "Block third-party cookies"\n' +
+                    '2. Use Firefox (more permissive with cookies)\n' +
+                    '3. Add the site to your browser\'s cookie allowlist'
+                );
+            }
         } catch (e: any) {
             console.error('Login error details:', {
                 message: e.message,
@@ -133,17 +150,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 response: e.response
             });
 
-            // Handle specific "missing scope" error which means cookie was blocked/lost
-            if (e.message && (e.message.includes('missing scope') || e.message.includes('guest'))) {
-                throw new Error('Session failed. Please add "ecostreak.vercel.app" to your Appwrite project Platforms (Overview → Platforms → Add Web).');
-            }
-            
-            if (e.code === 401) {
+            if (e.code === 401 && !e.message.includes('cookie')) {
                 throw new Error('Invalid email or password. Please try again.');
             }
 
-            const msg = handleError(e, 'AuthContext.login');
-            throw new Error(msg);
+            throw e;
         }
     };
 
