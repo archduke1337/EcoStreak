@@ -9,13 +9,31 @@ const TEAMS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID
 
 export async function GET(request: NextRequest) {
     try {
-        const { account, databases } = await createSessionClient();
+        let sessionClient;
+        try {
+            sessionClient = await createSessionClient();
+        } catch (e) {
+            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        }
+        
+        const { account, databases } = sessionClient;
         const accountData = await account.get();
         
-        // Check if user is admin
+        // Check if user is admin by email
         const adminEmails = getAdminEmails();
-        if (!adminEmails.includes(accountData.email.toLowerCase())) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        const isAdminByEmail = adminEmails.includes(accountData.email.toLowerCase());
+        
+        // Also check user's role in database
+        let isAdminByRole = false;
+        try {
+            const userDoc = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, accountData.$id);
+            isAdminByRole = userDoc.role === 'admin';
+        } catch (e) {
+            // User doc might not exist yet
+        }
+        
+        if (!isAdminByEmail && !isAdminByRole) {
+            return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 });
         }
 
         // Fetch all users

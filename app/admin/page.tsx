@@ -49,12 +49,18 @@ export default function AdminPage() {
             const response = await fetch('/api/admin/stats');
             
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 401) {
+                    toast.error('Please log in to access admin panel');
+                    router.push('/login');
+                    return;
+                }
                 if (response.status === 403) {
-                    toast.error('Unauthorized access');
+                    toast.error('Unauthorized - Admin access required');
                     router.push('/dashboard');
                     return;
                 }
-                throw new Error('Failed to fetch admin data');
+                throw new Error(errorData.error || 'Failed to fetch admin data');
             }
             
             const data = await response.json();
@@ -63,7 +69,7 @@ export default function AdminPage() {
             setLevelData(data.levelData);
         } catch (error: any) {
             console.error('Admin data error:', error);
-            toast.error('Failed to load admin data');
+            toast.error(error.message || 'Failed to load admin data');
         } finally {
             setDataLoading(false);
         }
