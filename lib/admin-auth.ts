@@ -3,7 +3,7 @@ import { User } from '@/types';
 // Admin whitelist emails
 const ADMIN_EMAILS = [
     'gauravramyadav@gmail.com',
-    'admin@ecostreak.in',
+    'jaydeepshirsath13@gmail.com',
     'principal@yourcollege.ac.in',
 ];
 
