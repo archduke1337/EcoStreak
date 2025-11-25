@@ -107,7 +107,11 @@ export default function ChallengesPage() {
             const totalChallenges = filteredTasks.reduce((sum, ct) => sum + ct.tasks.length, 0);
 
             // Update user badges if early bird
-            let newBadges = [...user.badges];
+            let currentBadges: string[] = [];
+            if (user.badges) {
+                currentBadges = typeof user.badges === 'string' ? JSON.parse(user.badges) : user.badges;
+            }
+            let newBadges = [...currentBadges];
             if (isEarlyBird && !newBadges.includes('early-bird')) {
                 newBadges.push('early-bird');
                 toast.success('🌅 Early Bird badge unlocked!');
@@ -122,7 +126,7 @@ export default function ChallengesPage() {
                 level: Math.floor((user.points + points) / 100) + 1,
                 streak: newStreak,
                 lastActiveDate: today,
-                badges: newBadges,
+                badges: JSON.stringify(newBadges),
                 completedTasks: JSON.stringify(filteredTasks),
             });
 

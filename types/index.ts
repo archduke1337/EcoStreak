@@ -5,7 +5,7 @@ export interface User {
     college: string;
     points: number;
     level: number;
-    badges: string[];
+    badges: string[] | string; // Can be array or JSON string
     streak: number;
     lastActiveDate: string;
     role: 'student' | 'admin';

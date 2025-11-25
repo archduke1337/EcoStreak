@@ -43,18 +43,29 @@ export async function GET(request: NextRequest) {
         );
 
         // Add email to each user from their account (email is not stored in collection)
-        const users = response.documents.map((doc: any) => ({
-            $id: doc.$id,
-            name: doc.name,
-            email: doc.email || `user_${doc.$id}@ecostreak.app`, // Placeholder since email not in collection
-            college: doc.college || 'Unknown',
-            points: doc.points || 0,
-            level: doc.level || 1,
-            badges: doc.badges || [],
-            streak: doc.streak || 0,
-            lastActiveDate: doc.lastActiveDate,
-            role: doc.role || 'student',
-        }));
+        const users = response.documents.map((doc: any) => {
+            // Parse badges if stored as string
+            let badges = doc.badges || [];
+            if (typeof badges === 'string') {
+                try {
+                    badges = JSON.parse(badges);
+                } catch {
+                    badges = [];
+                }
+            }
+            return {
+                $id: doc.$id,
+                name: doc.name,
+                email: doc.email || `user_${doc.$id}@ecostreak.app`, // Placeholder since email not in collection
+                college: doc.college || 'Unknown',
+                points: doc.points || 0,
+                level: doc.level || 1,
+                badges,
+                streak: doc.streak || 0,
+                lastActiveDate: doc.lastActiveDate,
+                role: doc.role || 'student',
+            };
+        });
 
         return NextResponse.json({ users });
     } catch (error: any) {

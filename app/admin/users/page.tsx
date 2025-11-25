@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
             u.college,
             u.points,
             u.level,
-            u.badges.length,
+            (typeof u.badges === 'string' ? JSON.parse(u.badges || '[]') : u.badges || []).length,
             u.streak,
             u.role,
         ]);
@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
                                                 <span className="font-bold text-green-600">{u.points}</span>
                                             </TableCell>
                                             <TableCell>{u.level}</TableCell>
-                                            <TableCell>{u.badges?.length || 0}</TableCell>
+                                            <TableCell>{(typeof u.badges === 'string' ? JSON.parse(u.badges || '[]') : u.badges || []).length}</TableCell>
                                             <TableCell>
                                                 <span className="text-orange-600">{u.streak || 0} 🔥</span>
                                             </TableCell>

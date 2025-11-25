@@ -78,7 +78,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="h-12 w-px bg-white/30"></div>
                                 <div className="text-center">
-                                    <p className="text-3xl font-bold">{user.badges.length}</p>
+                                    <p className="text-3xl font-bold">{(typeof user.badges === 'string' ? JSON.parse(user.badges || '[]') : user.badges || []).length}</p>
                                     <p className="text-sm opacity-90">Badges</p>
                                 </div>
                             </CardBody>

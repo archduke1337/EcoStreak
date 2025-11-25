@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
                     <StatCard
                         icon="🏅"
-                        value={user.badges.length}
+                        value={(typeof user.badges === 'string' ? JSON.parse(user.badges || '[]') : user.badges || []).length}
                         label="Badges Earned"
                         color="text-purple-600"
                         delay={0.4}
@@ -122,7 +122,7 @@ export default function DashboardPage() {
                         <CardBody>
                             <h2 className="text-2xl font-bold mb-4">🏅 Your Badges</h2>
                             <BadgeDisplay
-                                userBadges={user.badges}
+                                userBadges={typeof user.badges === 'string' ? JSON.parse(user.badges || '[]') : user.badges || []}
                                 points={user.points}
                                 streak={user.streak}
                                 modulesCompleted={modulesCompleted}

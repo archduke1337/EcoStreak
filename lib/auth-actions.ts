@@ -45,7 +45,7 @@ export async function signUpWithEmail(formData: {
                 college,
                 points: 0,
                 level: 1,
-                badges: [],
+                badges: "[]",
                 streak: 0,
                 lastActiveDate: new Date().toISOString().split("T")[0],
                 role: "student",
