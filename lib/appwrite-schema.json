@@ -1,0 +1,251 @@
+{
+    "collections": [
+        {
+            "name": "users",
+            "$id": "users",
+            "attributes": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "size": 255
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "size": 320
+                },
+                {
+                    "key": "college",
+                    "type": "string",
+                    "required": true,
+                    "size": 500
+                },
+                {
+                    "key": "points",
+                    "type": "integer",
+                    "required": true,
+                    "default": 0
+                },
+                {
+                    "key": "level",
+                    "type": "integer",
+                    "required": true,
+                    "default": 1
+                },
+                {
+                    "key": "badges",
+                    "type": "string",
+                    "required": true,
+                    "array": true,
+                    "default": []
+                },
+                {
+                    "key": "streak",
+                    "type": "integer",
+                    "required": true,
+                    "default": 0
+                },
+                {
+                    "key": "lastActiveDate",
+                    "type": "string",
+                    "required": true,
+                    "size": 50
+                },
+                {
+                    "key": "role",
+                    "type": "string",
+                    "required": true,
+                    "size": 20,
+                    "default": "student"
+                },
+                {
+                    "key": "teamId",
+                    "type": "string",
+                    "required": false,
+                    "size": 100
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "email_index",
+                    "type": "unique",
+                    "attributes": [
+                        "email"
+                    ]
+                },
+                {
+                    "key": "points_index",
+                    "type": "key",
+                    "attributes": [
+                        "points"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "college_index",
+                    "type": "key",
+                    "attributes": [
+                        "college"
+                    ]
+                },
+                {
+                    "key": "role_index",
+                    "type": "key",
+                    "attributes": [
+                        "role"
+                    ]
+                }
+            ],
+            "permissions": {
+                "read": [
+                    "role:all"
+                ],
+                "create": [
+                    "role:all"
+                ],
+                "update": [
+                    "role:all"
+                ],
+                "delete": [
+                    "role:admin"
+                ]
+            }
+        },
+        {
+            "name": "teams",
+            "$id": "teams",
+            "attributes": [
+                {
+                    "key": "teamName",
+                    "type": "string",
+                    "required": true,
+                    "size": 255
+                },
+                {
+                    "key": "teamCode",
+                    "type": "string",
+                    "required": true,
+                    "size": 10
+                },
+                {
+                    "key": "leaderId",
+                    "type": "string",
+                    "required": true,
+                    "size": 100
+                },
+                {
+                    "key": "members",
+                    "type": "string",
+                    "required": true,
+                    "array": true,
+                    "default": []
+                },
+                {
+                    "key": "totalPoints",
+                    "type": "integer",
+                    "required": true,
+                    "default": 0
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "teamCode_index",
+                    "type": "unique",
+                    "attributes": [
+                        "teamCode"
+                    ]
+                },
+                {
+                    "key": "totalPoints_index",
+                    "type": "key",
+                    "attributes": [
+                        "totalPoints"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                }
+            ],
+            "permissions": {
+                "read": [
+                    "role:all"
+                ],
+                "create": [
+                    "role:all"
+                ],
+                "update": [
+                    "role:all"
+                ],
+                "delete": [
+                    "role:admin"
+                ]
+            }
+        },
+        {
+            "name": "dailyChallenges",
+            "$id": "dailyChallenges",
+            "attributes": [
+                {
+                    "key": "date",
+                    "type": "string",
+                    "required": true,
+                    "size": 20
+                },
+                {
+                    "key": "title",
+                    "type": "string",
+                    "required": true,
+                    "size": 255
+                },
+                {
+                    "key": "description",
+                    "type": "string",
+                    "required": true,
+                    "size": 1000
+                },
+                {
+                    "key": "points",
+                    "type": "integer",
+                    "required": true,
+                    "default": 50
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "date_index",
+                    "type": "unique",
+                    "attributes": [
+                        "date"
+                    ]
+                }
+            ],
+            "permissions": {
+                "read": [
+                    "role:all"
+                ],
+                "create": [
+                    "role:admin"
+                ],
+                "update": [
+                    "role:admin"
+                ],
+                "delete": [
+                    "role:admin"
+                ]
+            }
+        }
+    ],
+    "setupInstructions": [
+        "1. Go to Appwrite Console (https://cloud.appwrite.io)",
+        "2. Create a new project named 'EcoStreak'",
+        "3. Go to Databases and create a new database named 'main'",
+        "4. For each collection above, create it with the exact attributes and indexes",
+        "5. Set permissions as specified (Settings > Permissions in each collection)",
+        "6. Copy your Project ID and Database ID to .env.local",
+        "7. Enable Email/Password authentication in Auth settings"
+    ]
+}

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Earth globe -->
+  <defs>
+    <radialGradient id="earthGradient" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2E8B57;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A5C3C;stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7CB342;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E8B57;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Central Earth -->
+  <circle cx="100" cy="100" r="45" fill="url(#earthGradient)" stroke="#1A3C34" stroke-width="2"/>
+  
+  <!-- Continents (simplified) -->
+  <path d="M85,80 Q90,75 95,80 L100,85 L95,90 Q90,85 85,80 Z" fill="#7CB342" opacity="0.8"/>
+  <path d="M105,95 Q110,90 115,95 L120,100 L115,105 Q110,110 105,95 Z" fill="#7CB342" opacity="0.8"/>
+  <ellipse cx="90" cy="110" rx="8" ry="12" fill="#7CB342" opacity="0.8"/>
+  
+  <!-- Wrapping leaf -->
+  <path d="M60,100 Q50,85 55,70 Q60,55 75,50 Q90,45 100,55 L105,60 Q100,50 95,45 Q90,40 80,42 Q70,44 62,52 Q54,60 52,70 Q50,80 55,90 Q58,96 60,100 Z" 
+        fill="url(#leafGradient)" stroke="#1A5C3C" stroke-width="1.5" opacity="0.9"/>
+  <path d="M140,100 Q150,115 145,130 Q140,145 125,150 Q110,155 100,145 L95,140 Q100,150 105,155 Q110,160 120,158 Q130,156 138,148 Q146,140 148,130 Q150,120 145,110 Q142,104 140,100 Z" 
+        fill="url(#leafGradient)" stroke="#1A5C3C" stroke-width="1.5" opacity="0.9"/>
+  
+  <!-- Leaf veins -->
+  <path d="M60,100 Q65,90 70,80" stroke="#1A5C3C" stroke-width="0.8" fill="none" opacity="0.6"/>
+  <path d="M140,100 Q135,110 130,120" stroke="#1A5C3C" stroke-width="0.8" fill="none" opacity="0.6"/>
+  
+  <!-- Recycling arrows around earth -->
+  <g stroke="#D4AF37" stroke-width="3" fill="none" stroke-linecap="round">
+    <!-- Top arrow -->
+    <path d="M100,40 A50,50 0 0,1 142,70" />
+    <path d="M142,70 L135,65 M142,70 L138,77" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Bottom-right arrow -->
+    <path d="M142,130 A50,50 0 0,1 100,160" />
+    <path d="M100,160 L107,155 M100,160 L104,167" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Bottom-left arrow -->
+    <path d="M58,130 A50,50 0 0,1 58,70" />
+    <path d="M58,70 L65,75 M58,70 L51,73" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Small stars/sparkles -->
+  <circle cx="75" cy="60" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="125" cy="140" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="160" cy="100" r="1.5" fill="#FFD700" opacity="0.8"/>
+  <circle cx="40" cy="100" r="1.5" fill="#FFD700" opacity="0.8"/>
+</svg>
