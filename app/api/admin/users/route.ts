@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionClient, createAdminClient } from "@/lib/appwrite-server";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE } from "@/lib/auth-constants";
 import { Query } from "node-appwrite";
 import { getAdminEmails } from "@/lib/admin-auth";
 
@@ -8,12 +10,19 @@ const USERS_COLLECTION_ID = process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID
 
 export async function GET(request: NextRequest) {
     try {
+        // Debug: Check for session cookie
+        const cookieStore = await cookies();
+        const sessionCookie = cookieStore.get(SESSION_COOKIE);
+        console.log('[admin/users] Session cookie exists:', !!sessionCookie?.value);
+        
         // Verify user is authenticated via session
         let accountData;
         try {
             const sessionClient = await createSessionClient();
             accountData = await sessionClient.account.get();
-        } catch (e) {
+            console.log('[admin/users] Auth successful');
+        } catch (e: any) {
+            console.error('[admin/users] Auth failed:', e.message);
             return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
         }
         
