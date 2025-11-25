@@ -30,6 +30,8 @@ export default function LoginPage() {
         try {
             await login(email, password);
             toast.success('Welcome back! 🌱');
+            // Wait a bit for cookie to sync before redirecting
+            await new Promise(resolve => setTimeout(resolve, 200));
             router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));

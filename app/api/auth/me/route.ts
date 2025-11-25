@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get(SESSION_COOKIE);
         console.log('[Auth/me] Session cookie exists:', !!sessionCookie?.value);
+        console.log('[Auth/me] Cookie value length:', sessionCookie?.value?.length);
         
         // Verify user is authenticated via session
         let accountData;
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
         } catch (e: any) {
             // No valid session
             console.log('[Auth/me] Session error:', e.message);
+            console.log('[Auth/me] Full error:', e);
             return NextResponse.json({ user: null }, { status: 401 });
         }
         

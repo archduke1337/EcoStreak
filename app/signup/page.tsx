@@ -50,6 +50,8 @@ export default function SignupPage() {
         try {
             await signup(formData.email, formData.password, formData.name, formData.college);
             toast.success('Welcome to EcoStreak! 🎉');
+            // Wait a bit for cookie to sync before redirecting
+            await new Promise(resolve => setTimeout(resolve, 200));
             router.push('/dashboard');
         } catch (error) {
             toast.error(getErrorMessage(error));
